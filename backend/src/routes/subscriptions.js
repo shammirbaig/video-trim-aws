@@ -1,6 +1,6 @@
 const express = require('express');
 const Stripe = require('stripe');
-const { authenticate } = require('../middleware/auth');
+const { requireAuth } = require('../middleware/auth');
 const User = require('../models/User');
 const logger = require('../utils/logger');
 
@@ -8,7 +8,7 @@ const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // POST /api/subscriptions/create-checkout-session
-router.post('/create-checkout-session', authenticate, async (req, res) => {
+router.post('/create-checkout-session', requireAuth, async (req, res) => {
   try {
     const { priceId, successUrl, cancelUrl } = req.body;
     
@@ -70,7 +70,7 @@ router.post('/create-checkout-session', authenticate, async (req, res) => {
 });
 
 // POST /api/subscriptions/create-portal-session
-router.post('/create-portal-session', authenticate, async (req, res) => {
+router.post('/create-portal-session', requireAuth, async (req, res) => {
   try {
     if (!req.user.subscription.stripeCustomerId) {
       return res.status(400).json({
@@ -100,10 +100,10 @@ router.post('/create-portal-session', authenticate, async (req, res) => {
 });
 
 // GET /api/subscriptions/status
-router.get('/status', authenticate, async (req, res) => {
+router.get('/status', requireAuth, async (req, res) => {
   try {
     let subscriptionData = {
-      status: req.user.subscription.status,
+      status: req.user.publicMetadata.subscription,
       hasActiveSubscription: req.user.hasActiveSubscription,
       currentPeriodEnd: req.user.subscription.currentPeriodEnd,
       cancelAtPeriodEnd: req.user.subscription.cancelAtPeriodEnd

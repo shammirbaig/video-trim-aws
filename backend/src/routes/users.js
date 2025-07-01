@@ -1,5 +1,5 @@
 const express = require('express');
-const { authenticate } = require('../middleware/auth');
+const { requireAuth } = require('../middleware/auth');
 const User = require('../models/User');
 const Video = require('../models/Video');
 const logger = require('../utils/logger');
@@ -7,7 +7,7 @@ const logger = require('../utils/logger');
 const router = express.Router();
 
 // GET /api/users/stats - Get user statistics
-router.get('/stats', authenticate, async (req, res) => {
+router.get('/stats', requireAuth, async (req, res) => {
   try {
     const userId = req.user._id;
     

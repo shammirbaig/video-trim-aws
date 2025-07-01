@@ -23,7 +23,6 @@ const PORT = process.env.PORT || 3001;
 const requiredEnvVars = [
   'CLERK_SECRET_KEY',
   'MONGODB_URI',
-  'JWT_SECRET'
 ];
 
 const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);

@@ -350,20 +350,33 @@ const TrimPage = () => {
                   </div>
                 </div>
                 
-                <div className="relative">
+                <div className="relative flex items-center">
                   <input
                     type="url"
                     value={formData.url}
-                    onChange={handleUrlChange}
+                    onChange={(e) => setFormData({ ...formData, url: e.target.value })}
                     placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
                     className="block w-full px-6 py-5 border-2 border-gray-200 rounded-2xl text-gray-900 placeholder-gray-500 focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-lg"
                     disabled={isProcessing}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        validateUrl(formData.url);
+                      }
+                    }}
                   />
-                  {isValidating && (
-                    <div className="absolute inset-y-0 right-0 pr-6 flex items-center">
-                      <Loader2 className="h-6 w-6 text-blue-600 animate-spin" />
-                    </div>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => validateUrl(formData.url)}
+                    disabled={isProcessing || isValidating || !formData.url.trim()}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl p-2 transition-all disabled:bg-gray-300"
+                    aria-label="Validate URL"
+                  >
+                    {isValidating ? (
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                    ) : (
+                      <ArrowRight className="h-6 w-6" />
+                    )}
+                  </button>
                 </div>
                 
                 <AnimatePresence>

@@ -3,7 +3,7 @@ import axios from 'axios';
 // Create axios instance with base configuration
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api',
-  timeout: 60000, // Increased timeout for video processing
+  timeout: 1000000, // Increased timeout for video processing
   headers: {
     'Content-Type': 'application/json',
   },
@@ -13,10 +13,16 @@ const api = axios.create({
 api.interceptors.request.use(
   async (config) => {
     try {
-      if (window.Clerk?.session) {
-        const token = await window.Clerk.session.getToken();
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
+      // Wait for Clerk to be available
+      if (typeof window !== 'undefined' && window.Clerk) {
+        // Ensure Clerk is loaded
+        await window.Clerk.load();
+        
+        if (window.Clerk.session) {
+          const token = await window.Clerk.session.getToken();
+          if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+          }
         }
       }
     } catch (error) {

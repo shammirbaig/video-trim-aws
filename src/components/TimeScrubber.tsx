@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Clock, Play, Square, Scissors, Zap } from 'lucide-react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect } from "react";
+import { Clock, Play, Square, Scissors, Zap } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface TimeScrubberProps {
   duration: number;
@@ -19,9 +19,9 @@ const TimeScrubber: React.FC<TimeScrubberProps> = ({
   currentTime,
   onStartTimeChange,
   onEndTimeChange,
-  onSeek
+  onSeek,
 }) => {
-  const [isDragging, setIsDragging] = useState<'start' | 'end' | 'current' | null>(null);
+  const [isDragging, setIsDragging] = useState<"start" | "end" | null>(null);
   const [startInput, setStartInput] = useState(startTime.toString());
   const [endInput, setEndInput] = useState(endTime.toString());
 
@@ -30,30 +30,63 @@ const TimeScrubber: React.FC<TimeScrubberProps> = ({
     setEndInput(Math.floor(endTime).toString());
   }, [startTime, endTime]);
 
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return;
+
+      const timeline = document.getElementById("timeline-bar");
+      if (!timeline) return;
+
+      const rect = timeline.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const percentage = x / rect.width;
+      const newTime = Math.max(0, Math.min(duration, percentage * duration));
+
+      handleSliderChange(newTime, isDragging);
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(null);
+    };
+
+    if (isDragging) {
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", handleMouseUp);
+    }
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDragging, duration, startTime, endTime]);
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const handleSliderChange = (value: number, type: 'start' | 'end' | 'current') => {
+  const handleSliderChange = (
+    value: number,
+    type: "start" | "end" | "current"
+  ) => {
     const clampedValue = Math.max(0, Math.min(duration, value));
-    
-    if (type === 'start') {
+
+    if (type === "start") {
       const newStart = Math.min(clampedValue, endTime - 1);
       onStartTimeChange(newStart);
-    } else if (type === 'end') {
+    } else if (type === "end") {
       const newEnd = Math.max(clampedValue, startTime + 1);
       onEndTimeChange(newEnd);
-    } else if (type === 'current') {
+    } else if (type === "current") {
       onSeek(clampedValue);
     }
   };
 
-  const handleInputChange = (value: string, type: 'start' | 'end') => {
+  const handleInputChange = (value: string, type: "start" | "end") => {
     const numValue = parseInt(value) || 0;
-    
-    if (type === 'start') {
+
+    if (type === "start") {
       setStartInput(value);
       if (numValue >= 0 && numValue < endTime) {
         onStartTimeChange(numValue);
@@ -68,26 +101,61 @@ const TimeScrubber: React.FC<TimeScrubberProps> = ({
 
   const trimDuration = endTime - startTime;
   const quickActions = [
-    { label: 'First 30s', action: () => { onStartTimeChange(0); onEndTimeChange(Math.min(30, duration)); } },
-    { label: 'Last 30s', action: () => { onStartTimeChange(Math.max(0, duration - 30)); onEndTimeChange(duration); } },
-    { label: 'Middle 30s', action: () => { const center = duration / 2; onStartTimeChange(Math.max(0, center - 15)); onEndTimeChange(Math.min(duration, center + 15)); } },
-    { label: 'First 60s', action: () => { onStartTimeChange(0); onEndTimeChange(Math.min(60, duration)); } },
-    { label: 'Last 60s', action: () => { onStartTimeChange(Math.max(0, duration - 60)); onEndTimeChange(duration); } }
+    {
+      label: "First 30s",
+      action: () => {
+        onStartTimeChange(0);
+        onEndTimeChange(Math.min(30, duration));
+      },
+    },
+    {
+      label: "Last 30s",
+      action: () => {
+        onStartTimeChange(Math.max(0, duration - 30));
+        onEndTimeChange(duration);
+      },
+    },
+    {
+      label: "Middle 30s",
+      action: () => {
+        const center = duration / 2;
+        onStartTimeChange(Math.max(0, center - 15));
+        onEndTimeChange(Math.min(duration, center + 15));
+      },
+    },
+    {
+      label: "First 60s",
+      action: () => {
+        onStartTimeChange(0);
+        onEndTimeChange(Math.min(60, duration));
+      },
+    },
+    {
+      label: "Last 60s",
+      action: () => {
+        onStartTimeChange(Math.max(0, duration - 60));
+        onEndTimeChange(duration);
+      },
+    },
   ];
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-3xl shadow-xl p-8 border border-gray-100"
+      className="bg-white rounded-3xl shadow-xl p-4 border border-gray-100"
     >
       <div className="flex items-center gap-3 mb-8">
         <div className="bg-gradient-to-br from-green-500 to-emerald-500 text-white p-3 rounded-xl">
           <Scissors className="w-6 h-6" />
         </div>
         <div>
-          <h3 className="text-2xl font-bold text-gray-900">Precision Trimming</h3>
-          <p className="text-gray-600">Set exact start and end times for your clip</p>
+          <h3 className="text-2xl font-bold text-gray-900">
+            Precision Trimming
+          </h3>
+          <p className="text-gray-600">
+            Set exact start and end times for your clip
+          </p>
         </div>
       </div>
 
@@ -100,7 +168,9 @@ const TimeScrubber: React.FC<TimeScrubberProps> = ({
             </div>
             <div>
               <div className="text-sm text-gray-600">Trim Duration</div>
-              <div className="text-2xl font-bold text-blue-600">{formatTime(trimDuration)}</div>
+              <div className="text-2xl font-bold text-blue-600">
+                {formatTime(trimDuration)}
+              </div>
             </div>
           </div>
           <div className="text-right">
@@ -118,55 +188,54 @@ const TimeScrubber: React.FC<TimeScrubberProps> = ({
           <span>Timeline</span>
           <span>Total: {formatTime(duration)}</span>
         </div>
-        
-        <div className="relative h-16 bg-gray-100 rounded-2xl overflow-hidden shadow-inner">
-          {/* Full duration bar */}
+
+        <div
+          id="timeline-bar"
+          className="relative h-16 bg-gray-100 rounded-2xl overflow-hidden shadow-inner"
+        >
           <div className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200" />
-          
-          {/* Selected range */}
+
           <motion.div
             className="absolute top-0 bottom-0 bg-gradient-to-r from-blue-500 to-indigo-500 shadow-lg"
             style={{
               left: `${(startTime / duration) * 100}%`,
-              width: `${((endTime - startTime) / duration) * 100}%`
+              width: `${((endTime - startTime) / duration) * 100}%`,
             }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 0.8 }}
             transition={{ duration: 0.3 }}
           />
-          
-          {/* Current time indicator */}
+
           <motion.div
             className="absolute top-0 bottom-0 w-1 bg-red-500 shadow-lg z-10"
             style={{ left: `${(currentTime / duration) * 100}%` }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
           />
-          
-          {/* Start time handle */}
+
+          {/* Start handle */}
           <motion.div
             className="absolute top-2 bottom-2 w-4 bg-blue-600 rounded-lg cursor-ew-resize shadow-lg hover:bg-blue-700 transition-colors z-20 flex items-center justify-center"
             style={{ left: `${(startTime / duration) * 100}%` }}
-            onMouseDown={() => setIsDragging('start')}
+            onMouseDown={() => setIsDragging("start")}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
           >
             <div className="w-1 h-6 bg-white rounded-full"></div>
           </motion.div>
-          
-          {/* End time handle */}
+
+          {/* End handle */}
           <motion.div
             className="absolute top-2 bottom-2 w-4 bg-indigo-600 rounded-lg cursor-ew-resize shadow-lg hover:bg-indigo-700 transition-colors z-20 flex items-center justify-center"
             style={{ left: `${(endTime / duration) * 100}%` }}
-            onMouseDown={() => setIsDragging('end')}
+            onMouseDown={() => setIsDragging("end")}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
           >
             <div className="w-1 h-6 bg-white rounded-full"></div>
           </motion.div>
         </div>
-        
-        {/* Time labels */}
+
         <div className="flex justify-between text-xs text-gray-500 mt-2">
           <span>0:00</span>
           <span>{formatTime(duration)}</span>
@@ -185,7 +254,7 @@ const TimeScrubber: React.FC<TimeScrubberProps> = ({
           <input
             type="number"
             value={startInput}
-            onChange={(e) => handleInputChange(e.target.value, 'start')}
+            onChange={(e) => handleInputChange(e.target.value, "start")}
             onBlur={() => setStartInput(Math.floor(startTime).toString())}
             min="0"
             max={endTime - 1}
@@ -195,7 +264,7 @@ const TimeScrubber: React.FC<TimeScrubberProps> = ({
             {formatTime(startTime)}
           </p>
         </div>
-        
+
         <div className="space-y-3">
           <label className="flex items-center text-sm font-semibold text-gray-700">
             <div className="bg-indigo-100 text-indigo-600 p-1 rounded mr-2">
@@ -206,7 +275,7 @@ const TimeScrubber: React.FC<TimeScrubberProps> = ({
           <input
             type="number"
             value={endInput}
-            onChange={(e) => handleInputChange(e.target.value, 'end')}
+            onChange={(e) => handleInputChange(e.target.value, "end")}
             onBlur={() => setEndInput(Math.floor(endTime).toString())}
             min={startTime + 1}
             max={duration}

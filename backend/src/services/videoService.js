@@ -140,7 +140,9 @@ class VideoService {
   async processVideo(trimData, progressCallback) {
     const { url, startTime, endTime, format, videoId: requestId } = trimData;
     const tempId = uuidv4();
-    const tempOutputPath = path.join(this.tempDir, `${tempId}.${format === 'mp3' ? 'mp3' : 'mp4'}`);
+    const tempOutputExt = format === 'mp3' ? 'mp3' : 'mp4';
+    const tempOutputPath = path.join(this.tempDir, `${tempId}.${tempOutputExt}`);
+    const ytDlpTempPath = path.join(this.tempDir, `${tempId}_yt.${tempOutputExt}`);
 
     try {
       // Validate trim duration
@@ -163,14 +165,47 @@ class VideoService {
       // Download and trim in one step (optimized)
       await this.downloadAndTrimVideo(
         url,
-        tempOutputPath,
+        ytDlpTempPath,
         startTime,
         trimDuration,
         formatSelector,
         progressCallback
       );
 
-      if (progressCallback) progressCallback(80, 'Uploading to cloud storage...');
+      // // Move yt-dlp output to expected output path if needed
+      // // Ensure the processed file exists at tempOutputPath, or move from ytDlpTempPath if needed
+      // try {
+      //   await fs.access(tempOutputPath);
+      // } catch {
+      //   // If not at tempOutputPath, try to move from ytDlpTempPath
+      //   try {
+      //     await fs.rename(ytDlpTempPath, tempOutputPath);
+      //   } catch {
+      //     throw new Error(`Processed file not found: ${ytDlpTempPath} or ${tempOutputPath}`);
+      //   }
+      // }
+
+      // if (progressCallback) progressCallback(80, 'Uploading to cloud storage...');
+
+      // // Ensure output file exists before uploading
+      // try {
+      //   await fs.access(tempOutputPath);
+      // } catch (err) {
+      //   throw new Error(`Processed file not found: ${tempOutputPath}`);
+      // }
+        const dirFiles = await fs.readdir(this.tempDir);
+        const foundFile = dirFiles.find(file =>
+          file.startsWith(tempId) && file.endsWith(`.${tempOutputExt}`)
+        );
+
+        if (!foundFile) {
+          throw new Error(`Processed file not found for tempId: ${tempId}`);
+        }
+
+        const actualPath = path.join(this.tempDir, foundFile);
+        if (actualPath !== tempOutputPath) {
+          await fs.rename(actualPath, tempOutputPath);
+        }
 
       // Upload to S3
       const s3Key = s3Service.generateVideoKey(requestId, format);
@@ -195,29 +230,35 @@ class VideoService {
         contentType,
         filename: `${this.sanitizeTitle(trimData.title || 'video')}.${format === 'mp3' ? 'mp3' : 'mp4'}`
       };
-
-    } catch (error) {
-      logger.error('Error processing video:', error);
-      
-      // Clean up temp file
+    } // <-- Add this closing brace to end processVideo method
+  
+  catch (error) {
+      logger.error('Video processing error:', error);
       await this.cleanupTempFile(tempOutputPath);
-      
-      throw error;
+      throw new Error(`Video processing failed: ${error.message}`);
     }
   }
 
   async downloadAndTrimVideo(url, outputPath, startTime, duration, formatSelector, progressCallback) {
     return new Promise((resolve, reject) => {
+      // Use correct ffmpeg args and yt-dlp format selection for proper trimming and muxing
+      const isAudioOnly = formatSelector === 'bestaudio[ext=m4a]/bestaudio/best' || formatSelector === 'mp3';
+      const ffmpegArgs = `ffmpeg_i:-ss ${startTime} -t ${duration} -avoid_negative_ts make_zero`;
       const args = [
         '-f', formatSelector,
         '--external-downloader', 'ffmpeg',
-        '--external-downloader-args', `ffmpeg_i:-ss ${startTime} -t ${duration} -avoid_negative_ts make_zero`,
+        '--external-downloader-args', ffmpegArgs,
         '-o', outputPath,
         '--no-warnings',
         '--progress',
         '--no-playlist',
+        ...(isAudioOnly ? ['--extract-audio', '--audio-format', 'mp3'] : []),
         url
       ];
+
+      // Ensure output directory exists before running yt-dlp
+      fs.mkdir(path.dirname(outputPath), { recursive: true }).catch(() => {});
+
 
       const ytdlp = spawn('yt-dlp', args);
       let errorOutput = '';
@@ -237,7 +278,10 @@ class VideoService {
         errorOutput += data.toString();
       });
 
-      ytdlp.on('close', (code) => {
+      ytdlp.on('close', async (code) => {
+        // const tempFiles = await fs.readdir(path.dirname(outputPath));
+        // logger.info('Temp directory contents:', tempFiles);
+
         if (code !== 0) {
           logger.error('yt-dlp processing error:', errorOutput);
           reject(new Error('Video processing failed. Please try again.'));
@@ -246,6 +290,7 @@ class VideoService {
 
         resolve();
       });
+
 
       ytdlp.on('error', (error) => {
         logger.error('yt-dlp spawn error:', error);

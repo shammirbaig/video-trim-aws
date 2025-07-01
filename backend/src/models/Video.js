@@ -153,12 +153,12 @@ videoSchema.pre('save', function(next) {
   next();
 });
 
-// Indexes for efficient queries
-videoSchema.index({ clerkUserId: 1, createdAt: -1 });
-videoSchema.index({ status: 1, createdAt: -1 });
-videoSchema.index({ expiresAt: 1 });
-videoSchema.index({ videoId: 1 });
-videoSchema.index({ userEmail: 1 });
+// // Indexes for efficient queries
+// videoSchema.index({ clerkUserId: 1, createdAt: -1 });
+// videoSchema.index({ status: 1, createdAt: -1 });
+// videoSchema.index({ expiresAt: 1 });
+// videoSchema.index({ videoId: 1 });
+// videoSchema.index({ userEmail: 1 });
 
 // TTL index for automatic cleanup of expired videos
 videoSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });

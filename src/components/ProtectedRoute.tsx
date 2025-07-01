@@ -2,7 +2,7 @@ import React from 'react';
 import { useUser } from '@clerk/clerk-react';
 import { Navigate } from 'react-router-dom';
 import { useSubscription } from '../hooks/useSubscription';
-import { Loader2, CreditCard, ArrowRight } from 'lucide-react';
+import { Loader2, CreditCard, ArrowRight, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface ProtectedRouteProps {
@@ -14,7 +14,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children, 
   requireSubscription = false 
 }) => {
-  const { isSignedIn, isLoaded } = useUser();
+  const { isSignedIn, isLoaded, user } = useUser();
   const { isActive: hasActiveSubscription, isLoading: subscriptionLoading } = useSubscription();
 
   // Show loading while checking authentication
@@ -28,6 +28,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         >
           <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
           <p className="text-gray-600">Loading...</p>
+          {user && (
+            <p className="text-sm text-gray-500 mt-2">
+              Welcome back, {user.firstName || user.emailAddresses?.[0]?.emailAddress}
+            </p>
+          )}
         </motion.div>
       </div>
     );
@@ -36,6 +41,22 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   // Redirect to home if not signed in
   if (!isSignedIn) {
     return <Navigate to="/" replace />;
+  }
+
+  // Debug information (remove in production)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('ProtectedRoute Debug:', {
+      isSignedIn,
+      isLoaded,
+      user: user ? {
+        id: user.id,
+        email: user.emailAddresses?.[0]?.emailAddress,
+        publicMetadata: user.publicMetadata,
+        privateMetadata: user.privateMetadata
+      } : null,
+      hasActiveSubscription,
+      requireSubscription
+    });
   }
 
   // Show subscription required message if needed

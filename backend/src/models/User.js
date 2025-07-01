@@ -96,8 +96,8 @@ userSchema.virtual('hasActiveSubscription').get(function() {
 });
 
 // Index for efficient queries
-userSchema.index({ 'subscription.stripeCustomerId': 1 });
-userSchema.index({ 'subscription.status': 1 });
-userSchema.index({ createdAt: -1 });
+// userSchema.index({ 'subscription.stripeCustomerId': 1 });
+// userSchema.index({ 'subscription.status': 1 });
+// userSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model('User', userSchema);

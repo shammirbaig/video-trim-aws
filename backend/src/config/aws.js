@@ -1,5 +1,6 @@
 const AWS = require('aws-sdk');
 const logger = require('../utils/logger');
+const { PassThrough } = require('stream');
 
 // Configure AWS
 AWS.config.update({
@@ -77,6 +78,44 @@ class S3Service {
       throw new Error('Failed to generate download URL');
     }
   }
+
+//   uploadStream = (key, contentType) => {
+//   const pass = new PassThrough();
+
+//   const params = {
+//     Bucket: this.bucket,
+//     Key: key,
+//     Body: pass,
+//     ContentType: contentType
+//     // Note: ACL removed due to bucket policy not allowing ACLs
+//   };
+
+//   // Start async upload without waiting for result here
+//   s3.upload(params).promise()
+//     .then(data => logger.info('S3 upload successful:', data.Location))
+//     .catch(err => logger.error('S3 upload error:', err));
+
+//   return pass;
+
+// };
+
+ uploadStream(key, contentType) {
+  const pass = new PassThrough();
+
+  const uploadPromise = s3.upload({
+    Bucket: this.bucket,
+    Key: key,
+    Body: pass,
+    ContentType: contentType
+  }).promise();
+
+  uploadPromise
+    .then(data => logger.info('S3 upload complete:', data.Location))
+    .catch(err => logger.error('S3 upload error:', err));
+
+  return { stream: pass, done: uploadPromise };
+}
+
 
   // Delete video from S3
   async deleteVideo(key) {

@@ -146,7 +146,7 @@ const TrimPage = () => {
         } catch (err) {
           console.error('Error checking status:', err);
         }
-      }, 2000);
+      }, 10000);
     }
     
     return () => {

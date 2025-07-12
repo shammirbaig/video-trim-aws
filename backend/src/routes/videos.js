@@ -137,8 +137,6 @@ router.post(
         originalUrl: url,
         videoId: videoInfo.videoId,
         title: videoInfo.title,
-        description: videoInfo.description,
-        thumbnail: videoInfo.thumbnail,
         duration: videoInfo.duration,
         trimSettings: {
           startTime,
@@ -160,6 +158,18 @@ router.post(
           video.status = "processing";
           await video.save();
 
+            function createProgressSaver(videoId) {
+              return async (progress) => {
+                try {
+                  await Video.updateOne(
+                    { _id: videoId },
+                    { $set: { processingProgress: progress } }
+                  );
+                } catch (err) {
+                  logger.error('Mongo update error:', err);
+                }
+              };
+            }
           const result = await videoService.processVideo({
             url,
             startTime,
@@ -167,7 +177,7 @@ router.post(
             format,
             videoId: video._id,
             title: videoInfo.title,
-          });
+          }, createProgressSaver(video._id));
 
           // Update video record with S3 data
           video.status = "completed";
@@ -279,10 +289,18 @@ router.get(
         });
       }
 
-      if (!video.isAvailable) {
-        return res.status(410).json({
+      // if (!video.isAvailable) {
+      //   return res.status(410).json({
+      //     success: false,
+      //     message: "Video is no longer available for download",
+      //   });
+      // }
+
+      // Ensure S3 key exists before generating pre-signed URL
+      if (!video.s3Data || !video.s3Data.key) {
+        return res.status(500).json({
           success: false,
-          message: "Video is no longer available for download",
+          message: "Video file is not available for download",
         });
       }
 

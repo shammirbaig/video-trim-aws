@@ -1,0 +1,37 @@
+# Stage 1: build dependencies
+FROM node:18-bullseye AS builder
+
+WORKDIR /app
+
+# Install Python pip and ffmpeg
+RUN apt-get update \
+  && apt-get install -y python3-pip ffmpeg \
+  && rm -rf /var/lib/apt/lists/*
+
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+# Stage 2: production image
+FROM node:18-bullseye
+
+WORKDIR /app
+
+RUN apt-get update \
+  && apt-get install -y python3-pip ffmpeg \
+  && rm -rf /var/lib/apt/lists/*
+
+# Copy over node modules and app code
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app . 
+
+# Ensure yt-dlp is installed
+RUN pip3 install --no-cache-dir yt-dlp
+
+# Expose port (adjust as needed)
+EXPOSE 3000
+
+# Start your Node.js entry point
+CMD ["node", "src/server.js"]

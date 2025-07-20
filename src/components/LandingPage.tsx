@@ -36,7 +36,9 @@ const LandingPage = () => {
       navigate('/trim');
     } else {
       // For non-authenticated users, redirect to payment first
-      window.location.href = `${import.meta.env.VITE_STRIPE_CHECKOUT_URL}?success_url=${window.location.origin}/payment-success&cancel_url=${window.location.origin}`;
+     // window.location.href = `${import.meta.env.VITE_STRIPE_CHECKOUT_URL}?success_url=${window.location.origin}/payment-success&cancel_url=${window.location.origin}`;
+           // Existing user - show sign in modal
+      document.querySelector('[data-clerk-sign-in-button]')?.click();
     }
   };
 
@@ -44,20 +46,16 @@ const LandingPage = () => {
     if (isSignedIn) {
       navigate('/trim');
     } else {
-      // Show sign in modal for existing users, or redirect to payment for new users
-      const userChoice = window.confirm(
-        "To start trimming videos, you need a VideoTrim Pro account.\n\n" +
-        "• Click 'OK' if you're a new user (you'll be redirected to payment)\n" +
-        "• Click 'Cancel' if you already have an account (you'll see the login form)"
-      );
-      
-      if (userChoice) {
-        // New user - redirect to payment
-        window.location.href = `${import.meta.env.VITE_STRIPE_CHECKOUT_URL}?success_url=${window.location.origin}/payment-success&cancel_url=${window.location.origin}`;
-      } else {
-        // Existing user - show sign in modal
-        document.querySelector('[data-clerk-sign-in-button]')?.click();
-      }
+      // Existing user - show sign in modal
+      document.querySelector('[data-clerk-sign-in-button]')?.click();
+
+      // if (userChoice) {
+      //   // New user - redirect to payment
+      //   window.location.href = `${import.meta.env.VITE_STRIPE_CHECKOUT_URL}?success_url=${window.location.origin}/payment-success&cancel_url=${window.location.origin}`;
+      // } else {
+      //   // Existing user - show sign in modal
+      //   document.querySelector('[data-clerk-sign-in-button]')?.click();
+      // }
     }
   };
 
@@ -234,7 +232,7 @@ const LandingPage = () => {
               
               <div className="flex items-center text-gray-600 bg-white/80 backdrop-blur-sm px-6 py-3 rounded-xl shadow-lg border border-white/50">
                 <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
-                <span className="font-medium">No contracts • Cancel anytime • 7-day guarantee</span>
+                <span className="font-medium">No contracts • Cancel anytime </span>
               </div>
             </motion.div>
 

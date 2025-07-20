@@ -208,9 +208,9 @@ const SubscribePage = () => {
               </motion.div>
             ) : (
               // Subscription Plans
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+              <div className="grid grid-cols-1 gap-12 mb-12">
                 {/* Free Plan */}
-                <motion.div
+                {/* <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.1 }}
@@ -247,7 +247,7 @@ const SubscribePage = () => {
                   >
                     Current Plan
                   </button>
-                </motion.div>
+                </motion.div> */}
 
                 {/* Pro Plan */}
                 <motion.div
@@ -319,7 +319,7 @@ const SubscribePage = () => {
                   </button>
                   
                   <p className="text-center text-sm text-gray-500 mt-4">
-                    🔒 Secure payment • 🚫 No setup fees • ✅ 7-day money-back guarantee
+                    🔒 Secure payment • 🚫 No setup fees
                   </p>
                 </motion.div>
               </div>

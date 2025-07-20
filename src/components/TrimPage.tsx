@@ -295,7 +295,7 @@ const TrimPage = () => {
                       </button>
                       
                       <p className="text-sm text-gray-500">
-                        Only $5/month • Cancel anytime • 7-day guarantee
+                        Only $5/month • Cancel anytime 
                       </p>
                     </div>
                   </motion.div>

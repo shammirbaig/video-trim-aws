@@ -17,26 +17,68 @@ import { motion } from 'framer-motion';
 import { useSubscription } from '../hooks/useSubscription';
 import Header from './Header';
 import ProtectedRoute from './ProtectedRoute';
+import { subscriptionAPI } from '../services/api';
 
 const SubscribePage = () => {
   const { isActive, isLoading, planName, expiresAt } = useSubscription();
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // const handleSubscribe = async () => {
+  //   setIsProcessing(true);
+    
+  //   try {
+  //     // Redirect to Stripe checkout
+  //     window.location.href = `${import.meta.env.VITE_STRIPE_CHECKOUT_URL}?success_url=${window.location.origin}/payment-success&cancel_url=${window.location.origin}/subscribe`;
+  //   } catch (error) {
+  //     console.error('Subscription error:', error);
+  //     setIsProcessing(false);
+  //   }
+  // };
+
+  // const handleManageSubscription = () => {
+  //   // In a real app, this would redirect to Stripe customer portal
+  //   alert('This would redirect to Stripe customer portal to manage your subscription');
+  // };
+
+    // Replace Stripe redirect with backend API call
   const handleSubscribe = async () => {
     setIsProcessing(true);
-    
     try {
-      // Redirect to Stripe checkout
-      window.location.href = `${import.meta.env.VITE_STRIPE_CHECKOUT_URL}?success_url=${window.location.origin}/payment-success&cancel_url=${window.location.origin}/subscribe`;
+      const res = await subscriptionAPI.createCheckoutSession({
+        successUrl: `${window.location.origin}/payment-success`,
+        cancelUrl: `${window.location.origin}/subscribe`,
+        priceId: import.meta.env.VITE_STRIPE_PRICE_ID
+      });
+      if (res?.success && res.data?.url) {
+        window.location.href = res.data.url;
+      } else {
+        alert('Failed to start subscription. Please try again.');
+      }
     } catch (error) {
       console.error('Subscription error:', error);
+      alert('Failed to start subscription. Please try again.');
+    } finally {
       setIsProcessing(false);
     }
   };
 
-  const handleManageSubscription = () => {
-    // In a real app, this would redirect to Stripe customer portal
-    alert('This would redirect to Stripe customer portal to manage your subscription');
+  const handleManageSubscription = async () => {
+    setIsProcessing(true);
+    try {
+      const res = await subscriptionAPI.createPortalSession({
+        returnUrl: `${window.location.origin}/subscribe`
+      });
+      if (res?.success && res.data?.url) {
+        window.location.href = res.data.url;
+      } else {
+        alert('Failed to open portal. Please try again.');
+      }
+    } catch (error) {
+      console.error('Portal error:', error);
+      alert('Failed to open portal. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const features = [

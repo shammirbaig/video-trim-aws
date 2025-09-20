@@ -15,6 +15,8 @@ const videoRoutes = require('./routes/videos');
 const subscriptionRoutes = require('./routes/subscriptions');
 const userRoutes = require('./routes/users');
 const webhookRoutes = require('./routes/webhooks');
+const mongoose = require('mongoose');
+const { execSync } = require('child_process');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -84,15 +86,27 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Health check endpoint
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'OK',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    environment: process.env.NODE_ENV,
-    version: process.env.npm_package_version || '1.0.0'
-  });
+app.get("/health", async (req, res) => {
+  try {
+    // MongoDB check (online)
+    const dbState = mongoose.connection.readyState; // 1 = connected
+    if (dbState !== 1) {
+      return res.status(500).json({ status: "error", service: "mongo" });
+    }
+
+    // yt-dlp check
+    try {
+      execSync("yt-dlp --version", { stdio: "ignore" });
+    } catch (e) {
+      return res.status(500).json({ status: "error", service: "yt-dlp" });
+    }
+
+    res.json({ status: "ok", service: "all" });
+  } catch (err) {
+    res.status(500).json({ status: "error", service: "unknown" });
+  }
 });
+
 
 // API routes
 app.use('/api/auth', authRoutes);

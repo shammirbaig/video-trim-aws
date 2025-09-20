@@ -38,15 +38,21 @@ export const useSubscription = (): SubscriptionStatus => {
     try {
       // Check subscription status from Clerk metadata (stateless)
       const publicMeta = user.publicMetadata || {};
-      const privateMeta = user.privateMetadata || {};
-      
-      const hasActiveSubscription = 
-        publicMeta.subscription === 'active' || 
-        privateMeta.stripeSubscriptionStatus === 'active' ||
-        publicMeta.stripeSubscriptionStatus === 'active';
 
-      const subscriptionStatus = publicMeta.subscriptionStatus || privateMeta.subscriptionStatus || 'inactive';
-      const expiresAt = publicMeta.subscriptionExpiresAt || privateMeta.subscriptionExpiresAt;
+      const stripeStatus = publicMeta.stripeStatus as string | undefined;
+      const stripePlanId = publicMeta.stripePlanId as string | undefined;
+      const stripeSubscriptionId = publicMeta.stripeSubscriptionId as string | undefined;
+      const stripeCustomerId = publicMeta.stripeCustomerId as string | undefined;
+
+      const hasActiveSubscription =
+        stripeStatus === 'active' &&
+        typeof stripeSubscriptionId === 'string' &&
+        typeof stripeCustomerId === 'string' &&
+        typeof stripePlanId === 'string';
+      
+
+      const subscriptionStatus = publicMeta.stripeStatus || 'inactive';
+      const expiresAt = publicMeta.subscriptionExpiresAt 
 
       setSubscription({
         isActive: hasActiveSubscription,
@@ -61,7 +67,6 @@ export const useSubscription = (): SubscriptionStatus => {
         isSignedIn,
         userId: user.id,
         publicMeta,
-        privateMeta,
         hasActiveSubscription
       });
 

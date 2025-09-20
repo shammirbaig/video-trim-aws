@@ -100,45 +100,48 @@ router.post('/create-portal-session', requireAuth, async (req, res) => {
 });
 
 // GET /api/subscriptions/status
-router.get('/status', requireAuth, async (req, res) => {
-  try {
-    let subscriptionData = {
-      status: req.user.publicMetadata.subscription,
-      hasActiveSubscription: req.user.hasActiveSubscription,
-      currentPeriodEnd: req.user.subscription.currentPeriodEnd,
-      cancelAtPeriodEnd: req.user.subscription.cancelAtPeriodEnd
-    };
+// router.get('/status', requireAuth, async (req, res) => {
+//   try {
+//     let subscriptionData = {
+//       status: req.user.subscription.stripeStatus,
+//       hasActiveSubscription: req.user.hasActiveSubscription,
+//       currentPeriodEnd: req.user.subscription.currentPeriodEnd,
+//       cancelAtPeriodEnd: req.user.subscription.cancelAtPeriodEnd,
+//       stripeCustomerId: req.user.subscription.stripeCustomerId,
+//       stripeSubscriptionId: req.user.subscription.stripeSubscriptionId,
+//       stripePlanId: req.user.subscription.stripePlanId
+//     };
 
-    // If user has a Stripe subscription, get latest data
-    if (req.user.subscription.stripeSubscriptionId) {
-      try {
-        const subscription = await stripe.subscriptions.retrieve(
-          req.user.subscription.stripeSubscriptionId
-        );
+//     // If user has a Stripe subscription, get latest data
+//     if (req.user.subscription.stripeSubscriptionId) {
+//       try {
+//         const subscription = await stripe.subscriptions.retrieve(
+//           req.user.subscription.stripeSubscriptionId
+//         );
         
-        subscriptionData = {
-          ...subscriptionData,
-          status: subscription.status,
-          currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-          cancelAtPeriodEnd: subscription.cancel_at_period_end,
-          hasActiveSubscription: ['active', 'trialing'].includes(subscription.status)
-        };
-      } catch (stripeError) {
-        logger.warn('Failed to fetch Stripe subscription:', stripeError);
-      }
-    }
+//         subscriptionData = {
+//           ...subscriptionData,
+//           status: subscription.status,
+//           currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+//           cancelAtPeriodEnd: subscription.cancel_at_period_end,
+//           hasActiveSubscription: ['active', 'trialing'].includes(subscription.status)
+//         };
+//       } catch (stripeError) {
+//         logger.warn('Failed to fetch Stripe subscription:', stripeError);
+//       }
+//     }
 
-    res.json({
-      success: true,
-      data: subscriptionData
-    });
-  } catch (error) {
-    logger.error('Get subscription status error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to get subscription status'
-    });
-  }
-});
+//     res.json({
+//       success: true,
+//       data: subscriptionData
+//     });
+//   } catch (error) {
+//     logger.error('Get subscription status error:', error);
+//     res.status(500).json({
+//       success: false,
+//       message: 'Failed to get subscription status'
+//     });
+//   }
+// });
 
 module.exports = router;

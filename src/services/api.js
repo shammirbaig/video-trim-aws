@@ -111,4 +111,24 @@ export const authAPI = {
   }
 };
 
+export const subscriptionAPI = {
+
+  // Create checkout session
+  createCheckoutSession: async ({ successUrl, cancelUrl, priceId }) => {
+    const response = await api.post('/subscriptions/create-checkout-session', { successUrl, cancelUrl, priceId });
+    return response.data;
+  },
+
+  createPortalSession: async () => {
+    const response = await api.post('/subscriptions/create-portal-session');
+    return response.data;
+  },
+
+  // Handle webhook events
+  handleWebhook: async (data) => {
+    const response = await api.post('/webhooks', data);
+    return response.data;
+  }
+};
+
 export default api;

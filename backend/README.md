@@ -259,3 +259,7 @@ CMD ["npm", "start"]
 ## License
 
 MIT License - see LICENSE file for details
+
+1.docker-compose up --build
+2. stop service: docker-compose down
+3. viewing logs: docker-compose logs -f
